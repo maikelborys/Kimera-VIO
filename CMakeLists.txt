@@ -159,6 +159,16 @@ endif(Pangolin_FOUND)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wno-unused-parameter -pipe)
 
+# Force DT_RPATH (legacy, checked before LD_LIBRARY_PATH) instead of DT_RUNPATH
+# (modern, checked after LD_LIBRARY_PATH). Sourcing /opt/ros/jazzy/setup.bash
+# prepends /opt/ros/jazzy/lib/x86_64-linux-gnu to LD_LIBRARY_PATH; with the
+# default DT_RUNPATH that path wins and we silently dlopen apt's libgtsam.so.4
+# (built with TANGENT_PREINTEGRATION=ON — wrong for Kimera). With DT_RPATH the
+# RUNPATH-equivalent /opt/kimera-deps/lib wins, so the source-built libgtsam
+# (TANGENT_PREINTEGRATION=OFF — correct) is loaded. Matters for any consumer
+# of libkimera_vio.so when ROS is sourced.
+target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--disable-new-dtags")
+
 # We would just need to say cxx_std_11 if we were using cmake 3.8
 target_compile_features(${PROJECT_NAME} PUBLIC
         cxx_auto_type cxx_constexpr cxx_range_for cxx_nullptr cxx_override)
